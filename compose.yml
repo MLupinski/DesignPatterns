@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  nginx:
+    image: nginx:stable-alpine
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./src:/var/www/html/
+      - ./logs/nginx:/var/log/nginx/
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+  php:
+    image: pattern-php
+    volumes:
+      - ./src:/var/www/html/
+      - ./logs/php.log:/var/log/fpm-php.www.log
+    user: "1000"
+    
