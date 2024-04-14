@@ -15,11 +15,9 @@ class CreateUserHandler
 
     public function handle(CreateUser $command): void
     {
-        $user = new User(
-            $command->email(),
-            $command->username()
-        );
+        $this->user->setEmail($command->email());
+        $this->user->setUsername($command->username());
 
-        $this->user->save($user);
+        $this->user->save();
     }
 }

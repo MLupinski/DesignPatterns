@@ -9,5 +9,6 @@ require_once 'vendor/autoload.php';
 
 $commandBus = CommandBus::getInstance();
 $commandBus->registerHandlers();
+
 $controller = new FrontController();
 $controller->run();
