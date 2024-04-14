@@ -21,6 +21,6 @@ class View {
             extract($data);
         }
 
-        include_once(str_replace('\core', '', __DIR__) . '/view/' . $this->template);
+        include_once(str_replace('/Core', '', __DIR__) . '/view/' . $this->template);
     }
 }
