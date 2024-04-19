@@ -7,17 +7,27 @@ namespace App\Controller;
 class FrontController
 {
     private const string CONTROLLER_NAMESPACE = 'App\Controller\\';
+    private const string CONTROLLER_FACTORY_NAMESPACE = 'App\Factory\\';
     private string $controller = self::CONTROLLER_NAMESPACE . 'HomeController';
-    private string $action = 'index';
+    private array $actions = ['controller' => 'index'];
     private array $params = [];
 
     public function __construct()
     {
         $serverRequest = $this->parseUri();
         if ($_SERVER['REQUEST_URI'] !== '/') {
-            $this->controller = self::CONTROLLER_NAMESPACE . ucwords($serverRequest['controller']) . 'Controller';
-            if (isset($serverRequest['action']) && $serverRequest['action'] !== "") {
-                $this->action = $serverRequest['action'];
+            $file = self::CONTROLLER_NAMESPACE . ucwords($serverRequest['controller']) . 'Controller';
+            $factoryFile = self::CONTROLLER_FACTORY_NAMESPACE . ucwords($serverRequest['controller']) . 'ControllerFactory';
+            if (class_exists($factoryFile)) {
+                $this->controller = $factoryFile;
+                $this->actions['factory'] = 'create';
+                $this->actions['controller'] = $serverRequest['action'] === '' ? 'index' : $serverRequest['action'];
+            } else {
+                $this->controller = $file;
+            }
+
+            if (isset($serverRequest['action']) && $serverRequest['action'] !== '') {
+                $this->actions['controller'] = $serverRequest['action'];
             }
         }
     }
@@ -27,7 +37,13 @@ class FrontController
      */
     public function run(): void
     {
-        call_user_func_array([new $this->controller, $this->action], $this->params);
+        if (isset($this->actions['factory'])) {
+            $class = call_user_func_array([new $this->controller, $this->actions['factory']], $this->params);
+            $controllerAction = $this->actions['controller'];
+            call_user_func_array([$class, $controllerAction], $this->params);
+        } else {
+            call_user_func_array([new $this->controller, $this->actions['controller']], $this->params);
+        }
     }
 
     /**
@@ -42,11 +58,15 @@ class FrontController
         }
 
         $uri = parse_url(ltrim($uri, '/'));
-        list($controller, $action) = explode('/', $uri['path']);
+        $uriParams = explode('/', $uri['path']);
         if (isset($uri['query'])) {
             $params = explode('&', $uri['query']);
         }
 
-        return ['controller' => $controller, 'action' => $action, 'params' => $params];
+        return [
+            'controller' => $uriParams[0],
+            'action' => $uriParams[1] ?? '',
+            'params' => $params
+        ];
     }
 }
